@@ -11,7 +11,7 @@ extern crate native_windows_gui as nwg;
 use std::rc::Rc;
 //for include the SwapMouseButton func
 mod func;
-pub use self::func::func::swap_mouse_button;
+pub use self::func::swap_mouse_button;
 
 fn main() {
     nwg::init().expect("Failed to init Native Windows GUI");
@@ -23,8 +23,12 @@ fn main() {
     let mut embed = Default::default();
     let layout = Default::default();
     let mut combobox = Default::default();
+    let mut ok_btn = Default::default(); //确认键
     let mut label = Default::default();
     let data = vec!["Left", "Right"];
+
+    //传入swapmousebutton的参数，fswap
+    // let mut fswap = true;
 
     //Menu
     let mut help_menu = Default::default();
@@ -32,10 +36,7 @@ fn main() {
     //   let mut menu_sep = Default::default();
     //   let mut update_menu = Default::default();
 
-
-    nwg::EmbedResource::builder()
-        .build(&mut embed)
-        .unwrap();
+    nwg::EmbedResource::builder().build(&mut embed).unwrap();
 
     nwg::Icon::builder()
         .source_embed(Some(&mut embed))
@@ -53,13 +54,13 @@ fn main() {
 
     //构建menu
     nwg::Menu::builder()
-        .text("&Help")
+        .text("&帮助(H)")
         .parent(&mut window)
         .build(&mut help_menu)
         .unwrap();
 
     nwg::MenuItem::builder()
-        .text("About")
+        .text("关于")
         .parent(&mut help_menu)
         .build(&mut about_menu)
         .unwrap();
@@ -76,11 +77,18 @@ fn main() {
             .unwrap();
     */
     nwg::ComboBox::builder()
-        .size((100, 100))
+        .size((80, 80))
         .collection(data)
         .selected_index(Some(0))
         .parent(&window)
         .build(&mut combobox)
+        .unwrap();
+
+    nwg::Button::builder()
+        .size((80, 80))
+        .text("确认")
+        .parent(&window)
+        .build(&mut ok_btn)
         .unwrap();
 
     nwg::Label::builder()
@@ -93,6 +101,7 @@ fn main() {
         .parent(&window)
         .spacing(1)
         .child(0, 0, &combobox)
+        .child(1, 0, &ok_btn)
         .child(0, 1, &label)
         .build(&layout)
         .unwrap();
@@ -106,7 +115,7 @@ fn main() {
         match evt {
             E::OnWindowClose => {
                 if &handle == &events_window as &nwg::Window {
-                    nwg::modal_info_message(&events_window.handle, "Goodbye", &format!("Goodbye "));
+                    nwg::modal_info_message(&events_window.handle, "再见", &format!("再见 "));
                     nwg::stop_thread_dispatch();
                 }
             }
@@ -115,8 +124,11 @@ fn main() {
                     let about_msg = "If this parameter is Left, the left button generates right-button messages and the right button generates left-button messages. If this parameter is Right, the buttons are restored to their original meanings".to_string();
                     nwg::modal_info_message(
                         &events_window.handle,
-                        "About",
-                        &format!("SwapMouseButton\n Reverses or restores the meaning of the left and right mouse buttons!\n {}",about_msg),
+                        "关于",
+                        &format!(
+                            "SwapMouseButton\n 切换鼠标的左键或右键为主键!\n {}",
+                            about_msg
+                        ),
                     );
                 }
                 /*
@@ -130,8 +142,9 @@ fn main() {
                 */
             }
 
-            E::OnComboxBoxSelection => {
-                if &handle == &combobox {
+            E::OnComboxBoxSelection => {}
+            E::OnButtonClick => {
+                if &handle == &ok_btn {
                     if combobox.selection_string().eq(&Some("Left".to_string())) {
                         let err = swap_mouse_button(true);
                         unsafe {
@@ -139,7 +152,11 @@ fn main() {
                         }
                     }
                     if combobox.selection_string().eq(&Some("Right".to_string())) {
-                        swap_mouse_button(false).unwrap();
+                        // fswap = false;
+                        let err = swap_mouse_button(false);
+                        unsafe {
+                            err.unwrap_unchecked();
+                        }
                     }
                 }
             }
